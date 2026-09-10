@@ -244,3 +244,41 @@ def analyze_dataset_statistics(
         "sample_records": sample_records,
         "top_candidate_brands": candidate_brands,
     }
+
+
+def reconstruct_conversations(df: pd.DataFrame) -> pd.DataFrame:
+    """Assign conversation_id to every tweet based on parent pointers.
+    
+    Uses memoized upward pointer traversal with path compression.
+    If a parent tweet is absent from the dataset, the earliest ancestor
+    in the dataset is assigned as the local conversation root.
+    """
+    has_parent = df["in_response_to_tweet_id"].notna()
+    parent_series = df.loc[has_parent, ["tweet_id", "in_response_to_tweet_id"]].astype(int)
+    parent_map = dict(zip(parent_series["tweet_id"], parent_series["in_response_to_tweet_id"]))
+    all_tweet_ids = set(df["tweet_id"])
+
+    root_memo: Dict[int, int] = {}
+
+    def find_root(t_id: int) -> int:
+        path = []
+        curr = t_id
+        while curr in parent_map:
+            parent = parent_map[curr]
+            if parent not in all_tweet_ids:
+                break
+            if curr in root_memo:
+                curr = root_memo[curr]
+                break
+            path.append(curr)
+            curr = parent
+            if len(path) > 100:  # cycle protection
+                break
+        for node in path:
+            root_memo[node] = curr
+        root_memo[t_id] = curr
+        return curr
+
+    df["conversation_id"] = [find_root(tid) for tid in df["tweet_id"]]
+    return df
+
