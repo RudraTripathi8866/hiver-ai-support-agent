@@ -6,7 +6,6 @@ from src.escalation import EscalationDecision
 
 def test_config_defaults():
     """Verify default configuration values load correctly."""
-    assert config.target_brand is not None
     assert config.top_k_retrieval > 0
     assert 0.0 <= config.confidence_threshold <= 1.0
 

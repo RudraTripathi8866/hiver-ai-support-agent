@@ -1,7 +1,7 @@
 """Configuration management for Hiver AI Support Agent.
 
 Loads environment variables, default paths, and pipeline parameters.
-No secret values are hardcoded.
+No provider, model, dataset filename, brand, or secrets are hardcoded.
 """
 
 from dataclasses import dataclass
@@ -25,24 +25,26 @@ load_dotenv(PROJECT_ROOT / ".env")
 class AppConfig:
     """Application and pipeline configuration container."""
 
-    # Provider & Model Settings
-    llm_provider: str = os.getenv("LLM_PROVIDER", "openai")
-    llm_model: str = os.getenv("LLM_MODEL", "gpt-4o-mini")
+    # Provider & Model Settings (to be selected in subsequent phases)
+    llm_provider: str | None = os.getenv("LLM_PROVIDER")
+    llm_model: str | None = os.getenv("LLM_MODEL")
     llm_api_key: str | None = os.getenv("LLM_API_KEY")
 
-    embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+    embedding_model: str | None = os.getenv("EMBEDDING_MODEL")
 
-    # Data Settings
-    raw_data_path: Path = Path(os.getenv("RAW_DATA_PATH", str(RAW_DATA_DIR / "customer_support.csv")))
-    processed_data_path: Path = Path(
-        os.getenv("PROCESSED_DATA_PATH", str(PROCESSED_DATA_DIR / "cleaned_conversations.parquet"))
+    # Data Settings (paths to be finalized after raw dataset inspection)
+    raw_data_path: Path | None = (
+        Path(os.getenv("RAW_DATA_PATH")) if os.getenv("RAW_DATA_PATH") else None
+    )
+    processed_data_path: Path | None = (
+        Path(os.getenv("PROCESSED_DATA_PATH")) if os.getenv("PROCESSED_DATA_PATH") else None
     )
     golden_data_path: Path = Path(
         os.getenv("GOLDEN_DATA_PATH", str(GOLDEN_DATA_DIR / "golden_evaluation_set.jsonl"))
     )
 
-    # Agent / Pipeline Parameters
-    target_brand: str = os.getenv("TARGET_BRAND", "AmazonHelp")
+    # Agent / Pipeline Parameters (target brand to be chosen based on dataset exploration)
+    target_brand: str | None = os.getenv("TARGET_BRAND")
     top_k_retrieval: int = int(os.getenv("TOP_K_RETRIEVAL", "3"))
     confidence_threshold: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.75"))
 
